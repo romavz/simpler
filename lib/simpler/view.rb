@@ -10,9 +10,7 @@ module Simpler
     end
 
     def render(binding)
-      template = File.read(template_path)
-
-      ERB.new(template).result(binding)
+      ERB.new(template_content).result(binding)
     end
 
     private
@@ -26,11 +24,18 @@ module Simpler
     end
 
     def template
-      @env['simpler.template']
+      @env['simpler.template'] ||= template_path.to_s
+    end
+
+    def template_content
+      return File.read(template) if template.is_a?(String)
+      return template[:plain] if template.is_a?(Hash) && template.include?(:plain)
+
+      raise ArgumentError, "Unknown template format: #{template} "
     end
 
     def template_path
-      path = template || [controller.name, action].join('/')
+      path = [controller.name, action].join('/')
 
       Simpler.root.join(VIEW_BASE_PATH, "#{path}.html.erb")
     end

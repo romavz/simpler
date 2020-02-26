@@ -3,13 +3,16 @@ require 'singleton'
 require 'sequel'
 require_relative 'router'
 require_relative 'controller'
+require_relative '../extentions/events'
 
 module Simpler
   class Application
 
     include Singleton
+    include Events
 
     attr_reader :db
+    event :make_response_event
 
     def initialize
       @router = Router.new
@@ -27,9 +30,13 @@ module Simpler
     end
 
     def call(env)
+      request = Rack::Request.new(env)
       route = @router.route_for(env)
-      controller = route.controller.new(env)
+      route.add_params_to(request)
+      controller = route.controller.new(request)
       action = route.action
+
+      fire(:make_response_event, controller, action)
 
       make_response(controller, action)
     end

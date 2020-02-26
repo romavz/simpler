@@ -5,9 +5,9 @@ module Simpler
 
     attr_reader :name, :request, :response
 
-    def initialize(env)
+    def initialize(request)
       @name = extract_name
-      @request = Rack::Request.new(env)
+      @request = request
       @response = Rack::Response.new
     end
 
@@ -20,6 +20,24 @@ module Simpler
       write_response
 
       @response.finish
+    end
+
+    def params
+      @request.params
+    end
+
+    protected
+
+    def status(code)
+      response.status = code
+    end
+
+    def headers
+      response.headers
+    end
+
+    def render(template)
+      @request.env['simpler.template'] = template
     end
 
     private
@@ -40,14 +58,6 @@ module Simpler
 
     def render_body
       View.new(@request.env).render(binding)
-    end
-
-    def params
-      @request.params
-    end
-
-    def render(template)
-      @request.env['simpler.template'] = template
     end
 
   end
